@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.GeoStamp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">@color/warm_white</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="android:colorBackground">@color/warm_white</item>
+        <item name="colorSurface">@color/panel</item>
+        <item name="colorOnSurface">@color/navy</item>
+        <item name="colorOnBackground">@color/navy</item>
+    </style>
+</resources>

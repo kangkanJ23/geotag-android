@@ -1,0 +1,8 @@
+<resources>
+    <color name="navy">#E9EDF5</color>
+    <color name="accent">#7FA8E6</color>
+    <color name="warm_white">#0E1526</color>
+    <color name="panel">#152038</color>
+    <color name="muted">#9AA5BD</color>
+    <color name="line">#26334F</color>
+</resources>
