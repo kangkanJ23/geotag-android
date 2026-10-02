@@ -56,6 +56,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etAddress: EditText
     private lateinit var etBrand: EditText
     private lateinit var cbMap: CheckBox
+    private lateinit var etWeather: EditText
+    private lateinit var cbWeather: CheckBox
+    private lateinit var weatherStatus: TextView
     private lateinit var btnDate: MaterialButton
     private lateinit var btnTime: MaterialButton
     private lateinit var btnSave: MaterialButton
@@ -70,6 +73,8 @@ class MainActivity : AppCompatActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
     private val renderRunnable = Runnable { renderPreview() }
+    private val weatherRunnable = Runnable { fetchWeather() }
+    private var weatherRequest = 0
 
     private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         val uri = captureUri
@@ -103,6 +108,9 @@ class MainActivity : AppCompatActivity() {
         etAddress = findViewById(R.id.etAddress)
         etBrand = findViewById(R.id.etBrand)
         cbMap = findViewById(R.id.cbMap)
+        etWeather = findViewById(R.id.etWeather)
+        cbWeather = findViewById(R.id.cbWeather)
+        weatherStatus = findViewById(R.id.weatherStatus)
         btnDate = findViewById(R.id.btnDate)
         btnTime = findViewById(R.id.btnTime)
         btnSave = findViewById(R.id.btnSave)
@@ -116,8 +124,10 @@ class MainActivity : AppCompatActivity() {
         btnTime.setOnClickListener { pickTime() }
         btnSave.setOnClickListener { onSaveClicked() }
 
-        listOf(etLat, etLng, etPlace, etAddress, etBrand).forEach { it.doAfterTextChanged { scheduleRender() } }
+        listOf(etLat, etLng, etPlace, etAddress, etBrand, etWeather).forEach { it.doAfterTextChanged { scheduleRender() } }
+        listOf(etLat, etLng).forEach { it.doAfterTextChanged { scheduleWeather() } }
         cbMap.setOnCheckedChangeListener { _, _ -> scheduleRender() }
+        cbWeather.setOnCheckedChangeListener { _, _ -> scheduleRender() }
 
         updateDateTimeButtons()
         requestLocation()
@@ -335,6 +345,37 @@ class MainActivity : AppCompatActivity() {
         btnDate.text = SimpleDateFormat("EEE, dd MMM yyyy", Locale.US).format(cal.time)
         btnTime.text = SimpleDateFormat("hh:mm a", Locale.US).format(cal.time)
         tzText.text = "Time zone: ${TimeZone.getDefault().id} (GMT ${Stamper.formatOffset(offsetMinutes())})"
+        scheduleWeather()
+    }
+
+    // ---------- Weather ----------
+
+    private fun scheduleWeather() {
+        handler.removeCallbacks(weatherRunnable)
+        handler.postDelayed(weatherRunnable, 800)
+    }
+
+    private fun fetchWeather() {
+        val lat = etLat.text.toString().toDoubleOrNull()?.takeIf { it in -90.0..90.0 }
+        val lng = etLng.text.toString().toDoubleOrNull()?.takeIf { it in -180.0..180.0 }
+        if (lat == null || lng == null) return
+        val at = cal.timeInMillis
+        val id = ++weatherRequest
+        weatherStatus.text = "Getting weather for this place and time…"
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try { Weather.fetch(lat, lng, at) } catch (_: Exception) { null }
+            }
+            if (id != weatherRequest) return@launch
+            if (result != null) {
+                etWeather.setText(result.text)
+                weatherStatus.text = "Weather for the chosen date and time"
+            } else {
+                weatherStatus.text = if (at > System.currentTimeMillis() + 15L * 24 * 60 * 60 * 1000)
+                    "No forecast that far ahead. You can type the weather."
+                else "Couldn't get weather. Check your internet, or type it."
+            }
+        }
     }
 
     private fun timeLine(): String =
@@ -353,6 +394,7 @@ class MainActivity : AppCompatActivity() {
             place = etPlace.text.toString().trim(),
             address = etAddress.text.toString().trim(),
             timeLine = timeLine(),
+            weather = if (cbWeather.isChecked) etWeather.text.toString().trim() else "",
             brand = etBrand.text.toString().trim(),
             showMap = cbMap.isChecked
         )

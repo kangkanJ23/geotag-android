@@ -18,6 +18,7 @@ data class StampInfo(
     val place: String,
     val address: String,
     val timeLine: String,
+    val weather: String,
     val brand: String,
     val showMap: Boolean
 )
@@ -34,14 +35,30 @@ object Stamper {
         val m = 18f * scale
         val hasLoc = info.lat != null && info.lng != null
         val showMap = info.showMap && hasLoc
-        val panelH = 150f * scale
-        val mapS = if (showMap) panelH else 0f
+        val mapS = if (showMap) 150f * scale else 0f
         val gap = if (showMap) 10f * scale else 0f
         val px = m + mapS + gap
-        val py = h - m - panelH
         val pw = w - px - m
+        val ip = 14f * scale
+        val maxW = pw - ip * 2
 
-        if (showMap) drawMap(c, m, py, mapS, info.lat!!, info.lng!!)
+        val titlePaint = textPaint(24f * scale, Typeface.create("sans-serif-medium", Typeface.NORMAL))
+        val bodyPaint = textPaint(16.5f * scale, Typeface.create("sans-serif", Typeface.NORMAL))
+        val lh = bodyPaint.textSize * 1.32f
+        val titleH = titlePaint.textSize * 1.3f
+
+        val lines = mutableListOf<String>()
+        if (info.address.isNotBlank()) lines += wrap(bodyPaint, info.address, maxW, 2)
+        if (hasLoc) lines += String.format(Locale.US, "Lat %.6f°  Long %.6f°", info.lat, info.lng)
+        if (info.weather.isNotBlank()) lines += wrap(bodyPaint, info.weather, maxW, 1)
+        if (info.timeLine.isNotBlank()) lines += wrap(bodyPaint, info.timeLine, maxW, 1)
+
+        val hasTitle = info.place.isNotBlank()
+        val contentH = (if (hasTitle) titleH else 0f) + lines.size * lh
+        val panelH = maxOf(mapS, ip * 2 + contentH)
+        val py = h - m - panelH
+
+        if (showMap) drawMap(c, m, py + panelH - mapS, mapS, info.lat!!, info.lng!!)
 
         val panelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(140, 0, 0, 0) }
         val rr = 8f * scale
@@ -60,29 +77,14 @@ object Stamper {
             c.drawText(info.brand, bx + pad, by + bh / 2 - (fm.ascent + fm.descent) / 2, bp)
         }
 
-        val ip = 14f * scale
-        val maxW = pw - ip * 2
-        var ty = py + ip
-
-        val titlePaint = textPaint(24f * scale, Typeface.create("sans-serif-medium", Typeface.NORMAL))
-        val bodyPaint = textPaint(16.5f * scale, Typeface.create("sans-serif", Typeface.NORMAL))
-        val lh = bodyPaint.textSize * 1.32f
-
-        if (info.place.isNotBlank()) {
+        // Vertically centre the text block in the panel
+        var ty = py + (panelH - contentH) / 2
+        if (hasTitle) {
             val line = wrap(titlePaint, info.place, maxW, 1).first()
             c.drawText(line, px + ip, ty - titlePaint.fontMetrics.ascent, titlePaint)
-            ty += titlePaint.textSize * 1.3f
+            ty += titleH
         }
-
-        val lines = mutableListOf<String>()
-        if (info.address.isNotBlank()) lines += wrap(bodyPaint, info.address, maxW, 2)
-        if (hasLoc) {
-            lines += String.format(Locale.US, "Lat %.6f°  Long %.6f°", info.lat, info.lng)
-        }
-        if (info.timeLine.isNotBlank()) lines += info.timeLine
-
-        val room = maxOf(1, ((py + panelH - ip - ty) / lh).toInt())
-        lines.takeLast(room).forEachIndexed { i, l ->
+        lines.forEachIndexed { i, l ->
             c.drawText(l, px + ip, ty + i * lh - bodyPaint.fontMetrics.ascent, bodyPaint)
         }
         return out

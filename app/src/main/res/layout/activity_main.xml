@@ -199,6 +199,39 @@
 
         <TextView
             style="@style/SectionLabel"
+            android:text="WEATHER" />
+
+        <TextView
+            android:id="@+id/weatherStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Weather loads after location is found"
+            android:textColor="@color/muted"
+            android:textSize="13sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Weather">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etWeather"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbWeather"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Show weather on stamp" />
+
+        <TextView
+            style="@style/SectionLabel"
             android:text="STAMP" />
 
         <com.google.android.material.textfield.TextInputLayout

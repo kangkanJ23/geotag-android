@@ -5,6 +5,7 @@ Android app that stamps photos with a map tile, place, address, coordinates and 
 - Take a photo in the app or pick one from the gallery
 - Location fills in automatically from the phone's GPS (or from the photo's own GPS data)
 - Address fills in automatically from the coordinates
+- Weather (condition, temperature, humidity, wind) for the chosen place and time, from Open-Meteo
 - Pick any date and time; it is printed on the stamp and written into the photo's EXIF data
 - Optional brand name and map tile
 - Saves to Pictures/GeoStamp in the gallery
