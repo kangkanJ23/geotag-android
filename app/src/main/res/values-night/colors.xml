@@ -5,4 +5,6 @@
     <color name="panel">#152038</color>
     <color name="muted">#9AA5BD</color>
     <color name="line">#26334F</color>
+    <color name="soft">#1B2846</color>
+    <color name="danger">#F97066</color>
 </resources>

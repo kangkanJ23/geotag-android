@@ -18,7 +18,6 @@ data class StampInfo(
     val place: String,
     val address: String,
     val timeLine: String,
-    val weather: String,
     val brand: String,
     val showMap: Boolean
 )
@@ -50,7 +49,6 @@ object Stamper {
         val lines = mutableListOf<String>()
         if (info.address.isNotBlank()) lines += wrap(bodyPaint, info.address, maxW, 2)
         if (hasLoc) lines += String.format(Locale.US, "Lat %.6f°  Long %.6f°", info.lat, info.lng)
-        if (info.weather.isNotBlank()) lines += wrap(bodyPaint, info.weather, maxW, 1)
         if (info.timeLine.isNotBlank()) lines += wrap(bodyPaint, info.timeLine, maxW, 1)
 
         val hasTitle = info.place.isNotBlank()

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/action_shift" android:title="Change time for all photos" app:showAsAction="never" />
+    <item android:id="@+id/action_location_all" android:title="Change place for all photos" app:showAsAction="never" />
+    <item android:id="@+id/action_settings" android:title="Stamp settings" app:showAsAction="never" />
+    <item android:id="@+id/action_import" android:title="Add from gallery" app:showAsAction="never" />
+    <item android:id="@+id/action_clear" android:title="Remove all photos" app:showAsAction="never" />
+</menu>

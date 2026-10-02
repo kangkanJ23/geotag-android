@@ -1,15 +1,15 @@
 # GeoStamp
 
-Android app that stamps photos with a map tile, place, address, coordinates and a date and time you choose.
+Android camera app that stamps photos with a map tile, place, address, coordinates and date and time.
 
-- Take a photo in the app or pick one from the gallery
-- Location fills in automatically from the phone's GPS (or from the photo's own GPS data)
-- Address fills in automatically from the coordinates
-- Weather (condition, temperature, humidity, wind) for the chosen place and time, from Open-Meteo
-- Pick any date and time; it is printed on the stamp and written into the photo's EXIF data
+- In-app camera: tap the shutter as many times as you like
+- Every shot stores the phone's GPS location, address and time with the photo
+- Review all photos in a grid when you're done
+- Change any photo's time, place, address or coordinates, with a live stamp preview
+- Bulk changes: move all times together, or set one place for every photo
 - Optional brand name and map tile
-- Saves to Pictures/GeoStamp in the gallery
+- Save all to Pictures/GeoStamp, with matching EXIF data
 
 ## Get the APK
 
-Every push to `main` builds the app with GitHub Actions. Download `GeoStamp.apk` from the **Releases** page (the "latest" release) on your phone and open it to install. Android will ask you to allow installs from your browser or file manager the first time.
+Every push to `main` builds the app with GitHub Actions. Download `GeoStamp.apk` from the **Releases** page (the "latest" release) on your phone and open it to install.
