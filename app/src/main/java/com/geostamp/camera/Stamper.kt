@@ -19,7 +19,8 @@ data class StampInfo(
     val address: String,
     val timeLine: String,
     val brand: String,
-    val showMap: Boolean
+    val showMap: Boolean,
+    val mapTile: Bitmap? = null
 )
 
 object Stamper {
@@ -56,7 +57,7 @@ object Stamper {
         val panelH = maxOf(mapS, ip * 2 + contentH)
         val py = h - m - panelH
 
-        if (showMap) drawMap(c, m, py + panelH - mapS, mapS, info.lat!!, info.lng!!)
+        if (showMap) drawMap(c, m, py + panelH - mapS, mapS, info.lat!!, info.lng!!, info.mapTile)
 
         val panelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(140, 0, 0, 0) }
         val rr = 8f * scale
@@ -116,66 +117,24 @@ object Stamper {
         return lines
     }
 
-    // Simple seeded random so the same spot always draws the same tile
-    private class Rng(seed: Long) {
-        private var s = seed xor 0x5DEECE66DL
-        fun next(): Float {
-            s = (s * 6364136223846793005L + 1442695040888963407L)
-            return ((s ushr 33) and 0x7FFFFFFF).toFloat() / 0x7FFFFFFF.toFloat()
-        }
-    }
-
-    private fun drawMap(c: Canvas, x: Float, y: Float, s: Float, lat: Double, lng: Double) {
-        val r = Rng((lat * 1e4).roundToInt().toLong() * 7919L xor (lng * 1e4).roundToInt().toLong() * 104729L)
-        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private fun drawMap(c: Canvas, x: Float, y: Float, s: Float, lat: Double, lng: Double, tile: Bitmap?) {
+        val p = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         c.save()
         c.clipRect(x, y, x + s, y + s)
 
-        p.color = Color.rgb(239, 235, 227)
-        c.drawRect(x, y, x + s, y + s, p)
-
-        repeat(14) {
-            p.color = if (r.next() < 0.25f) Color.rgb(207, 230, 196) else Color.rgb(227, 222, 212)
-            val bw = s * (0.12f + r.next() * 0.25f)
-            val bh = s * (0.1f + r.next() * 0.22f)
-            val bx = x + r.next() * s
-            val by = y + r.next() * s
-            c.drawRect(bx, by, bx + bw, by + bh, p)
+        if (tile != null) {
+            c.drawBitmap(tile, null, RectF(x, y, x + s, y + s), p)
+        } else {
+            drawTerrainSketch(c, x, y, s, lat, lng)
         }
-        if (r.next() < 0.6f) {
-            p.color = Color.rgb(170, 211, 223)
-            val wx = x + if (r.next() < 0.5f) 0f else s * 0.65f
-            val wy = y + r.next() * s * 0.5f + s * 0.3f
-            c.drawOval(RectF(wx - s * 0.35f, wy - s * 0.25f, wx + s * 0.35f, wy + s * 0.25f), p)
-        }
-
-        fun road(x1: Float, y1: Float, x2: Float, y2: Float, width: Float, col: Int) {
-            p.style = Paint.Style.STROKE
-            p.strokeCap = Paint.Cap.ROUND
-            p.color = Color.rgb(201, 194, 180)
-            p.strokeWidth = width + s * 0.012f
-            c.drawLine(x1, y1, x2, y2, p)
-            p.color = col
-            p.strokeWidth = width
-            c.drawLine(x1, y1, x2, y2, p)
-            p.style = Paint.Style.FILL
-        }
-        repeat(5) {
-            val yy = y + r.next() * s
-            road(x - 10, yy, x + s + 10, yy + (r.next() - 0.5f) * s * 0.5f, s * 0.03f, Color.WHITE)
-        }
-        repeat(4) {
-            val xx = x + r.next() * s
-            road(xx, y - 10, xx + (r.next() - 0.5f) * s * 0.5f, y + s + 10, s * 0.03f, Color.WHITE)
-        }
-        road(x - 10, y + s * (0.3f + r.next() * 0.4f), x + s + 10, y + s * (0.3f + r.next() * 0.4f), s * 0.05f, Color.rgb(251, 211, 141))
 
         // Pin
         val cx = x + s / 2
         val cy = y + s / 2
         val pr = s * 0.085f
+        p.style = Paint.Style.FILL
         p.color = Color.argb(64, 0, 0, 0)
-        c.drawOval(RectF(cx - pr * 0.55f, cy + pr * 0.15f - pr * 0.2f, cx + pr * 0.55f, cy + pr * 0.15f + pr * 0.2f), p)
+        c.drawOval(RectF(cx - pr * 0.55f, cy - pr * 0.05f, cx + pr * 0.55f, cy + pr * 0.35f), p)
         val headY = cy - pr * 1.6f
         val tail = Path().apply {
             moveTo(cx - pr * 0.8f, headY + pr * 0.6f)
@@ -189,11 +148,87 @@ object Stamper {
         p.color = Color.rgb(127, 29, 29)
         c.drawCircle(cx, headY, pr * 0.38f, p)
 
+        // Data credit required by the map provider
+        if (tile != null) {
+            val credit = "© OpenStreetMap · OpenTopoMap"
+            val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = s * 0.052f
+                color = Color.rgb(40, 40, 40)
+                typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            }
+            val tw = tp.measureText(credit)
+            val bh = tp.textSize * 1.35f
+            p.color = Color.argb(190, 255, 255, 255)
+            c.drawRect(x + s - tw - s * 0.04f, y + s - bh, x + s, y + s, p)
+            c.drawText(credit, x + s - tw - s * 0.02f, y + s - bh * 0.28f, tp)
+        }
+
         c.restore()
         p.style = Paint.Style.STROKE
         p.color = Color.argb(230, 255, 255, 255)
         p.strokeWidth = maxOf(2f, s * 0.012f)
         c.drawRect(x, y, x + s, y + s, p)
+    }
+
+    // Simple seeded random so the same spot always draws the same sketch
+    private class Rng(seed: Long) {
+        private var st = seed xor 0x5DEECE66DL
+        fun next(): Float {
+            st = st * 6364136223846793005L + 1442695040888963407L
+            return ((st ushr 33) and 0x7FFFFFFF).toFloat() / 0x7FFFFFFF.toFloat()
+        }
+    }
+
+    /** Offline fallback: a terrain-style sketch with shaded hills and contour lines. */
+    private fun drawTerrainSketch(c: Canvas, x: Float, y: Float, s: Float, lat: Double, lng: Double) {
+        val r = Rng((lat * 1e4).roundToInt().toLong() * 7919L xor (lng * 1e4).roundToInt().toLong() * 104729L)
+        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+        p.color = Color.rgb(226, 232, 206)
+        c.drawRect(x, y, x + s, y + s, p)
+
+        // Forest patches
+        repeat(6) {
+            p.color = Color.argb(150, 178, 210, 160)
+            val rx = s * (0.12f + r.next() * 0.2f)
+            val cx = x + r.next() * s
+            val cy = y + r.next() * s
+            c.drawOval(RectF(cx - rx, cy - rx * 0.7f, cx + rx, cy + rx * 0.7f), p)
+        }
+        // Hills as nested contour rings
+        p.style = Paint.Style.STROKE
+        repeat(3) {
+            val hx = x + r.next() * s
+            val hy = y + r.next() * s
+            val base = s * (0.18f + r.next() * 0.25f)
+            val tilt = r.next() * 0.5f + 0.6f
+            for (k in 0 until 6) {
+                val rad = base * (1f - k * 0.15f)
+                p.strokeWidth = if (k % 3 == 0) s * 0.008f else s * 0.004f
+                p.color = Color.argb(170, 168, 128, 84)
+                c.drawOval(RectF(hx - rad, hy - rad * tilt, hx + rad, hy + rad * tilt), p)
+            }
+        }
+        // River
+        p.color = Color.rgb(140, 190, 220)
+        p.strokeWidth = s * 0.025f
+        p.strokeCap = Paint.Cap.ROUND
+        val path = Path()
+        val ry = y + s * (0.2f + r.next() * 0.6f)
+        path.moveTo(x - 10, ry)
+        path.cubicTo(x + s * 0.3f, ry + (r.next() - 0.5f) * s * 0.5f, x + s * 0.6f, ry + (r.next() - 0.5f) * s * 0.5f, x + s + 10, ry + (r.next() - 0.5f) * s * 0.3f)
+        c.drawPath(path, p)
+        // Roads
+        p.color = Color.WHITE
+        p.strokeWidth = s * 0.022f
+        repeat(2) {
+            val yy = y + r.next() * s
+            c.drawLine(x - 10, yy, x + s + 10, yy + (r.next() - 0.5f) * s * 0.6f, p)
+        }
+        p.color = Color.rgb(246, 200, 120)
+        p.strokeWidth = s * 0.03f
+        val xx = x + r.next() * s
+        c.drawLine(xx, y - 10, xx + (r.next() - 0.5f) * s * 0.6f, y + s + 10, p)
+        p.style = Paint.Style.FILL
     }
 
     fun formatOffset(minutes: Int): String {

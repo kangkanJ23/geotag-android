@@ -293,7 +293,14 @@ class ReviewActivity : AppCompatActivity() {
                 btnSaveAll.text = "Saving ${done + failed + 1} of ${todo.size}…"
                 val info = Format.stampInfo(this@ReviewActivity, item)
                 val ok = withContext(Dispatchers.IO) {
-                    try { Exporter.save(this@ReviewActivity, item, info); true } catch (_: Throwable) { false }
+                    try {
+                        val lat = item.lat
+                        val lng = item.lng
+                        val tile = if (info.showMap && lat != null && lng != null)
+                            MapTiles.terrain(this@ReviewActivity, lat, lng) else null
+                        Exporter.save(this@ReviewActivity, item, info.copy(mapTile = tile))
+                        true
+                    } catch (_: Throwable) { false }
                 }
                 if (ok) { item.saved = true; done++ } else failed++
                 progress.setProgressCompat(done + failed, true)

@@ -206,6 +206,13 @@ class CameraActivity : AppCompatActivity() {
                 )
                 Session.add(item)
                 refreshThumb()
+                // Download the terrain map for this spot now, so saving later works offline
+                if (loc != null) {
+                    val appCtx = applicationContext
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try { MapTiles.terrain(appCtx, loc.latitude, loc.longitude)?.recycle() } catch (_: Exception) {}
+                    }
+                }
                 // If the address wasn't known yet for this spot, fill it in when it arrives
                 if (loc != null && place.isBlank()) {
                     Geo.reverse(this@CameraActivity, loc.latitude, loc.longitude) { p, a ->

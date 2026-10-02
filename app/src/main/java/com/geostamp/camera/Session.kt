@@ -120,13 +120,14 @@ object Format {
 
     fun shortTime(ms: Long): String = SimpleDateFormat("dd MMM, hh:mm a", Locale.US).format(ms)
 
-    fun stampInfo(ctx: Context, item: PhotoItem) = StampInfo(
+    fun stampInfo(ctx: Context, item: PhotoItem, mapTile: android.graphics.Bitmap? = null) = StampInfo(
         lat = item.lat,
         lng = item.lng,
         place = item.place,
         address = item.address,
         timeLine = stampTime(item.timeMillis),
         brand = Prefs.brand(ctx),
-        showMap = Prefs.showMap(ctx)
+        showMap = Prefs.showMap(ctx),
+        mapTile = mapTile
     )
 }

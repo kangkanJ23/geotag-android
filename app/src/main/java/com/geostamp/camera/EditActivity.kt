@@ -45,6 +45,8 @@ class EditActivity : AppCompatActivity() {
     private lateinit var cbPlaceAll: CheckBox
 
     private var base: Bitmap? = null
+    private var tile: Bitmap? = null
+    private var tileKey: String? = null
     private val cal = Calendar.getInstance()
     private val handler = Handler(Looper.getMainLooper())
     private val renderRunnable = Runnable { render() }
@@ -152,7 +154,23 @@ class EditActivity : AppCompatActivity() {
 
     private fun render() {
         val b = base ?: return
-        preview.setImageBitmap(Stamper.stamp(b, Format.stampInfo(this, draft())))
+        val d = draft()
+        val lat = d.lat
+        val lng = d.lng
+        val key = if (lat != null && lng != null) String.format(Locale.US, "%.5f,%.5f", lat, lng) else null
+        if (key != tileKey) {
+            tileKey = key
+            tile = null
+            if (lat != null && lng != null && Prefs.showMap(this)) {
+                lifecycleScope.launch {
+                    val t = withContext(Dispatchers.IO) {
+                        try { MapTiles.terrain(this@EditActivity, lat, lng) } catch (_: Exception) { null }
+                    }
+                    if (key == tileKey && t != null) { tile = t; render() }
+                }
+            }
+        }
+        preview.setImageBitmap(Stamper.stamp(b, Format.stampInfo(this, d, tile)))
     }
 
     private fun applyChanges() {

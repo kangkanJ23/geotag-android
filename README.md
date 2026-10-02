@@ -7,7 +7,7 @@ Android camera app that stamps photos with a map tile, place, address, coordinat
 - Review all photos in a grid when you're done
 - Change any photo's time, place, address or coordinates, with a live stamp preview
 - Bulk changes: move all times together, or set one place for every photo
-- Optional brand name and map tile
+- Terrain map tile (OpenTopoMap, works offline once downloaded) and optional brand name
 - Save all to Pictures/GeoStamp, with matching EXIF data
 
 ## Get the APK
